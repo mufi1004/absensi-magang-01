@@ -13,33 +13,16 @@ body {
   padding: 24px 16px 60px;
 }
 
-.switch-row {
-  display: flex;
-  gap: 8px;
-  margin-bottom: 20px;
-}
-
-.switch-row button {
-  flex: 1;
-  padding: 10px;
-  border-radius: 8px;
-  border: 1px solid #d6d3ce;
-  background: #fff;
-  font-size: 14px;
-}
-
-.switch-row button.active {
-  background: #1c1c1a;
-  color: #fff;
-  border-color: #1c1c1a;
-}
-
 .card {
-  background: #fff;
+  background: #ffffff;
   border: 1px solid #e3e0d9;
   border-radius: 12px;
   padding: 16px;
   margin-bottom: 16px;
+}
+
+.login-card {
+  margin-top: 40px;
 }
 
 .row-between {
@@ -52,12 +35,14 @@ body {
   font-weight: 600;
   font-size: 15px;
   margin: 0;
+  color: #1c1c1a;
 }
 
 .label {
   font-weight: 600;
   font-size: 14px;
   margin: 0 0 10px;
+  color: #1c1c1a;
 }
 
 .muted {
@@ -70,10 +55,20 @@ body {
   font-size: 12px;
 }
 
+.error-text {
+  color: #b3261e;
+  font-size: 13px;
+  margin: -4px 0 10px;
+}
+
 .btn-row {
   display: flex;
   gap: 8px;
   margin-top: 12px;
+}
+
+.btn-row button {
+  flex: 1;
 }
 
 button {
@@ -81,13 +76,32 @@ button {
   padding: 10px 14px;
   border-radius: 8px;
   border: 1px solid #d6d3ce;
-  background: #fff;
+  background: #ffffff;
+  color: #1c1c1a;
   font-size: 14px;
+  font-weight: 500;
 }
 
 button:disabled {
   opacity: 0.5;
   cursor: not-allowed;
+}
+
+button.primary {
+  background: #1c1c1a;
+  color: #ffffff;
+  border-color: #1c1c1a;
+}
+
+button.primary:disabled {
+  background: #a9a8a4;
+  border-color: #a9a8a4;
+  color: #ffffff;
+}
+
+button.full {
+  width: 100%;
+  margin-top: 4px;
 }
 
 button.ghost {
@@ -96,6 +110,7 @@ button.ghost {
   color: #6b6a65;
   padding: 4px 8px;
   font-size: 13px;
+  font-weight: 400;
 }
 
 input, textarea {
@@ -106,6 +121,8 @@ input, textarea {
   font-size: 14px;
   margin-bottom: 10px;
   font-family: inherit;
+  color: #1c1c1a;
+  background: #ffffff;
 }
 
 textarea {
@@ -121,4 +138,5 @@ textarea {
   border-top: 1px solid #eeece7;
   padding: 8px 0;
   font-size: 13px;
+  color: #1c1c1a;
 }
