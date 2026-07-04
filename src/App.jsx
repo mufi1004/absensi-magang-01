@@ -175,6 +175,58 @@ function InternView({ user, onLogout }) {
   )
 }
 
+function CreateUserForm({ onCreated }) {
+  const [loginId, setLoginId] = useState('')
+  const [name, setName] = useState('')
+  const [role, setRole] = useState('intern')
+  const [pin, setPin] = useState('')
+  const [error, setError] = useState('')
+  const [success, setSuccess] = useState('')
+  const [loading, setLoading] = useState(false)
+
+  async function handleCreate() {
+    if (!loginId.trim() || !name.trim() || !pin.trim()) {
+      setError('Semua kolom wajib diisi.')
+      return
+    }
+    setLoading(true)
+    setError('')
+    setSuccess('')
+    const { error: err } = await supabase
+      .from('users')
+      .insert({ login_id: loginId.trim(), name: name.trim(), role, pin: pin.trim() })
+    if (err) {
+      setError(err.code === '23505' ? 'ID ini sudah dipakai, coba ID lain.' : 'Gagal membuat akun.')
+      setLoading(false)
+      return
+    }
+    setSuccess(`Akun ${name.trim()} berhasil dibuat.`)
+    setLoginId('')
+    setName('')
+    setPin('')
+    setLoading(false)
+    onCreated()
+  }
+
+  return (
+    <div className="card">
+      <p className="label">Buat akun baru</p>
+      <input value={name} onChange={(e) => setName(e.target.value)} placeholder="Nama lengkap" />
+      <input value={loginId} onChange={(e) => setLoginId(e.target.value)} placeholder="ID login (contoh: magang03)" />
+      <input value={pin} onChange={(e) => setPin(e.target.value)} placeholder="PIN" />
+      <div className="btn-row" style={{ marginBottom: '10px' }}>
+        <button className={role === 'intern' ? 'primary' : ''} onClick={() => setRole('intern')}>Anak magang</button>
+        <button className={role === 'mentor' ? 'primary' : ''} onClick={() => setRole('mentor')}>Mentor</button>
+      </div>
+      {error && <p className="error-text">{error}</p>}
+      {success && <p className="muted small">{success}</p>}
+      <button className="primary full" onClick={handleCreate} disabled={loading}>
+        {loading ? 'Membuat...' : 'Buat akun'}
+      </button>
+    </div>
+  )
+}
+
 function MentorView({ user, onLogout }) {
   const [rows, setRows] = useState([])
   const [loading, setLoading] = useState(true)
@@ -210,6 +262,8 @@ function MentorView({ user, onLogout }) {
         <p className="name">{user.name}</p>
         <button className="ghost" onClick={onLogout}>Keluar</button>
       </div>
+      <CreateUserForm onCreated={loadData} />
+
       <div className="row-between">
         <p className="label">Rekap hari ini</p>
         <button className="ghost" onClick={loadData}>Muat ulang</button>
