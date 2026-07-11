@@ -275,66 +275,8 @@ function CreateBatchForm({ onCreated }) {
   )
 }
 
-function AssignForm({ batches, pesertaList, pembimbingList, onAssigned }) {
-  const [batchId, setBatchId] = useState('')
-  const [pesertaId, setPesertaId] = useState('')
-  const [pembimbingId, setPembimbingId] = useState('')
-  const [error, setError] = useState('')
-  const [success, setSuccess] = useState('')
-  const [loading, setLoading] = useState(false)
-
-  async function handleAssign() {
-    if (!batchId || !pesertaId || !pembimbingId) {
-      setError('Pilih batch, peserta, dan pembimbing.')
-      return
-    }
-    setLoading(true)
-    setError('')
-    setSuccess('')
-    const { error: err } = await supabase.from('peserta_pembimbing').insert({
-      batch_id: batchId,
-      peserta_id: pesertaId,
-      pembimbing_id: pembimbingId,
-    })
-    if (err) {
-      setError(err.code === '23505' ? 'Peserta ini sudah di-assign di batch tersebut.' : 'Gagal assign.')
-      setLoading(false)
-      return
-    }
-    setSuccess('Berhasil di-assign.')
-    setLoading(false)
-    onAssigned()
-  }
-
-  return (
-    <div className="card">
-      <p className="label">Assign peserta ke pembimbing</p>
-      <select value={batchId} onChange={(e) => setBatchId(e.target.value)}>
-        <option value="">Pilih batch</option>
-        {batches.map((b) => <option key={b.id} value={b.id}>{b.nama_batch}</option>)}
-      </select>
-      <select value={pesertaId} onChange={(e) => setPesertaId(e.target.value)}>
-        <option value="">Pilih peserta</option>
-        {pesertaList.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
-      </select>
-      <select value={pembimbingId} onChange={(e) => setPembimbingId(e.target.value)}>
-        <option value="">Pilih pembimbing</option>
-        {pembimbingList.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
-      </select>
-      {error && <p className="error-text">{error}</p>}
-      {success && <p className="muted small">{success}</p>}
-      <button className="primary full" onClick={handleAssign} disabled={loading}>
-        {loading ? 'Menyimpan...' : 'Assign'}
-      </button>
-    </div>
-  )
-}
-
 function AdminView({ user, onLogout }) {
   const [batches, setBatches] = useState([])
-  const [pesertaList, setPesertaList] = useState([])
-  const [pembimbingList, setPembimbingList] = useState([])
-  const [assignments, setAssignments] = useState([])
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
@@ -344,18 +286,8 @@ function AdminView({ user, onLogout }) {
   async function loadData() {
     setLoading(true)
     const { data: batchData } = await supabase.from('batches').select('*').order('created_at', { ascending: false })
-    const { data: peserta } = await supabase.from('users').select('*').eq('role', 'peserta')
-    const { data: pembimbing } = await supabase.from('users').select('*').eq('role', 'pembimbing')
-    const { data: assignData } = await supabase.from('peserta_pembimbing').select('*')
     setBatches(batchData || [])
-    setPesertaList(peserta || [])
-    setPembimbingList(pembimbing || [])
-    setAssignments(assignData || [])
     setLoading(false)
-  }
-
-  function nameOf(list, id) {
-    return list.find((x) => x.id === id)?.name || '-'
   }
 
   return (
@@ -367,25 +299,19 @@ function AdminView({ user, onLogout }) {
 
       <CreateUserForm onCreated={loadData} />
       <CreateBatchForm onCreated={loadData} />
-      <AssignForm
-        batches={batches}
-        pesertaList={pesertaList}
-        pembimbingList={pembimbingList}
-        onAssigned={loadData}
-      />
 
       <div className="row-between">
-        <p className="label">Daftar assignment</p>
+        <p className="label">Daftar batch</p>
         <button className="ghost" onClick={loadData}>Muat ulang</button>
       </div>
       {loading && <p className="muted">Memuat...</p>}
-      {!loading && assignments.length === 0 && <p className="muted">Belum ada assignment.</p>}
-      {assignments.map((a) => (
-        <div className="card" key={a.id}>
-          <p className="name">{nameOf(pesertaList, a.peserta_id)}</p>
-          <p className="muted small">
-            Dibimbing oleh {nameOf(pembimbingList, a.pembimbing_id)} · {batches.find((b) => b.id === a.batch_id)?.nama_batch || '-'}
-          </p>
+      {!loading && batches.length === 0 && <p className="muted">Belum ada batch.</p>}
+      {batches.map((b) => (
+        <div className="card" key={b.id}>
+          <p className="name">{b.nama_batch}</p>
+          {(b.tanggal_mulai || b.tanggal_selesai) && (
+            <p className="muted small">{b.tanggal_mulai || '-'} s/d {b.tanggal_selesai || '-'}</p>
+          )}
         </div>
       ))}
     </div>
@@ -402,18 +328,8 @@ function PembimbingView({ user, onLogout }) {
 
   async function loadData() {
     setLoading(true)
-    // ambil peserta yang di-assign ke pembimbing ini
-    const { data: assignments } = await supabase
-      .from('peserta_pembimbing')
-      .select('*')
-      .eq('pembimbing_id', user.id)
-    const pesertaIds = (assignments || []).map((a) => a.peserta_id)
-
-    let pesertaList = []
-    if (pesertaIds.length > 0) {
-      const { data } = await supabase.from('users').select('*').in('id', pesertaIds)
-      pesertaList = data || []
-    }
+    const { data: pesertaList0 } = await supabase.from('users').select('*').eq('role', 'peserta')
+    const pesertaList = pesertaList0 || []
 
     const { data: attendance } = await supabase
       .from('attendance')
@@ -445,7 +361,7 @@ function PembimbingView({ user, onLogout }) {
         <button className="ghost" onClick={loadData}>Muat ulang</button>
       </div>
       {loading && <p className="muted">Memuat...</p>}
-      {!loading && rows.length === 0 && <p className="muted">Belum ada peserta yang di-assign ke kamu. Hubungi admin.</p>}
+      {!loading && rows.length === 0 && <p className="muted">Belum ada peserta terdaftar.</p>}
       {rows.map((r) => {
         const status = r.attendance?.check_out ? 'Selesai' : r.attendance?.check_in ? 'Sedang bekerja' : 'Belum absen'
         return (
